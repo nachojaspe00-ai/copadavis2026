@@ -1,0 +1,8 @@
+name = "copa-davis-2026"
+compatibility_date = "2026-09-04"
+pages_build_output_dir = "."
+
+[[d1_databases]]
+binding = "DB"
+database_name = "copa-davis-2026"
+database_id = "3cf7f83c-4c9d-4522-97e5-5dc2475bcdc9"
