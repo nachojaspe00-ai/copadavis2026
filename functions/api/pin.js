@@ -4,6 +4,6 @@ export async function onRequestPost({request,env}){
   const body=await request.json().catch(()=>({})); const pin=String(body.pin||'');
   if(!/^\d{4,8}$/.test(pin)) return json({error:'El PIN debe tener entre 4 y 8 números.'},400);
   const salt=randomBytes(16), hash=await pbkdf2(pin,salt);
-  await env.DB.prepare('INSERT INTO admin_config(id,pin_hash,salt,iterations,updated_at) VALUES(1,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET pin_hash=excluded.pin_hash,salt=excluded.salt,iterations=excluded.iterations,updated_at=excluded.updated_at').bind(b64url(hash),b64url(salt),120000,nowIso()).run();
+  await env.DB.prepare('INSERT INTO admin_config(id,pin_hash,salt,iterations,updated_at) VALUES(1,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET pin_hash=excluded.pin_hash,salt=excluded.salt,iterations=excluded.iterations,updated_at=excluded.updated_at').bind(b64url(hash),b64url(salt),100000,nowIso()).run();
   return json({ok:true});
 }
