@@ -5,14 +5,11 @@ import {
   randomBytes,
   b64url,
   sha256,
-  pbkdf2,
   sessionCookie,
   clearSessionCookie,
   requireAdmin,
   cleanSessions
 } from './_utils.js';
-
-const MAX_ITERATIONS = 100000;
 
 export async function onRequestGet({ request, env }) {
   return json({
@@ -47,15 +44,11 @@ export async function onRequestPost({ request, env }) {
       );
     }
 
-    // ---------------------------------------------------------
-    // EL ADMIN_PIN DE CLOUDFLARE ES LA FUENTE DE VERDAD
-    // ---------------------------------------------------------
-
+    // ADMIN_PIN es la fuente de verdad.
     if (!env.ADMIN_PIN) {
       return json(
         {
-          error:
-            'ADMIN_PIN no está configurado en Cloudflare.'
+          error: 'ADMIN_PIN no está configurado en Cloudflare.'
         },
         500
       );
@@ -63,7 +56,7 @@ export async function onRequestPost({ request, env }) {
 
     const configuredPin = String(env.ADMIN_PIN);
 
-    // Comparamos el PIN ingresado con el secreto de Cloudflare.
+    // Comprobar PIN
     if (pin !== configuredPin) {
       return json(
         { error: 'PIN incorrecto.' },
@@ -71,43 +64,8 @@ export async function onRequestPost({ request, env }) {
       );
     }
 
-    // ---------------------------------------------------------
     // PIN CORRECTO
-    // ---------------------------------------------------------
-
-    // Generamos/actualizamos la configuración almacenada en D1.
-    const salt = randomBytes(16);
-
-    const hash = await pbkdf2(
-      configuredPin,
-      salt,
-      MAX_ITERATIONS
-    );
-
-    await env.DB
-      .prepare(
-        `INSERT INTO admin_config
-          (id, pin_hash, salt, iterations, updated_at)
-         VALUES (?, ?, ?, ?, ?)
-         ON CONFLICT(id) DO UPDATE SET
-           pin_hash=excluded.pin_hash,
-           salt=excluded.salt,
-           iterations=excluded.iterations,
-           updated_at=excluded.updated_at`
-      )
-      .bind(
-        1,
-        b64url(hash),
-        b64url(salt),
-        MAX_ITERATIONS,
-        nowIso()
-      )
-      .run();
-
-    // ---------------------------------------------------------
-    // CREAR SESIÓN
-    // ---------------------------------------------------------
-
+    // Generamos una sesión nueva.
     const token = b64url(randomBytes(32));
 
     const tokenHash = b64url(
@@ -120,9 +78,7 @@ export async function onRequestPost({ request, env }) {
 
     await env.DB
       .prepare(
-        `INSERT INTO admin_sessions
-         (token_hash, expires_at)
-         VALUES (?, ?)`
+        'INSERT INTO admin_sessions (token_hash, expires_at) VALUES (?, ?)'
       )
       .bind(tokenHash, exp)
       .run();
