@@ -110,31 +110,28 @@ header{height:74px;background:#070b0a;display:flex;align-items:center;padding:0 
 </div></section>
 
 <section id="admin" class="page"><div class="content">
-<div class="section-title"><h2>ADMINISTRACIÓN</h2><p>Gestión de equipos, jugadores, fixture y resultados.</p></div>
-<div class="notice"><b>GUARDADO AUTOMÁTICO:</b> cada modificación se guarda automáticamente en la base de datos para todos los usuarios.</div>
+<div class="section-title"><h2>ADMINISTRACIÓN</h2><p>Acá podés editar absolutamente toda la competencia: equipos, jugadores, fechas, enfrentamientos, partidos y resultados.</p></div>
+<div class="notice"><b>EDITOR GENERAL:</b> todo lo que cargues queda guardado automáticamente. La pestaña FIXTURE es el centro de armado del torneo; desde ahí se crean las fechas, los enfrentamientos y los partidos que componen cada enfrentamiento.</div>
 
 <div class="admin-grid">
-<div class="card"><h3>Crear / modificar equipo</h3><div class="form">
-<label>Equipo existente</label><select id="teamKey"><option value="__new__">+ Crear equipo nuevo</option></select><label>Nombre</label><input id="teamName" placeholder="Nombre del equipo"><label>Icono</label><select id="teamIcon"><option>🎾</option><option>🏆</option><option>🏅</option><option>🎯</option><option>⭐</option><option>🔥</option><option>⚡</option></select>
-<div style="display:flex;gap:8px"><button class="btn primary" onclick="saveTeam()">GUARDAR</button><button class="btn danger" onclick="deleteTeam()">BORRAR</button></div>
+<div class="card"><h3>Equipo</h3><div class="form">
+<label>Equipo</label><select id="teamKey" onchange="teamSelected()"><option value="__new__">+ Crear equipo nuevo</option></select>
+<label>Nombre</label><input id="teamName" placeholder="Nombre del equipo">
+<label>Icono</label><select id="teamIcon"><option>🎾</option><option>🏆</option><option>🏅</option><option>🎯</option><option>⭐</option><option>🔥</option><option>⚡</option><option>🦅</option><option>🦁</option><option>🐺</option></select>
+<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" onclick="saveTeam()">GUARDAR EQUIPO</button><button class="btn danger" onclick="deleteTeam()">BORRAR EQUIPO</button></div>
 </div></div>
 
-<div class="card"><h3>Agregar / modificar jugador</h3><div class="form">
-<label>Nombre</label><input id="playerName" placeholder="Nombre y apellido"><label>Equipo</label><select id="playerTeam"></select><label>Nivel</label><select id="playerLevel"><option>Capitán</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
+<div class="card"><h3>Jugador</h3><div class="form">
+<label>Nombre</label><input id="playerName" placeholder="Nombre y apellido">
+<label>Equipo</label><select id="playerTeam"></select>
+<label>Nivel</label><select id="playerLevel"><option>Capitán</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
 <button class="btn primary" onclick="addPlayer()">AGREGAR JUGADOR</button>
 </div></div>
 </div>
 
-<div class="card" style="margin-top:18px"><h3>Jugadores</h3><div id="adminPlayers" class="admin-list"></div></div>
+<div class="card" style="margin-top:18px"><h3>Jugadores cargados</h3><p class="muted">Cada jugador tiene su propio botón EDITAR para cambiar nombre, equipo o nivel.</p><div id="adminPlayers" class="admin-list"></div></div>
 
-<div class="card" style="margin-top:18px"><h3>Fixture</h3><p class="muted">Las fechas y los enfrentamientos se crean desde la pestaña FIXTURE. Desde Administración se cargan los partidos individuales y los resultados.</p></div>
-<div class="card" style="margin-top:18px"><h3>Configuración del fixture</h3><p class="muted">Desde acá podés eliminar una fecha completa o solamente un enfrentamiento.</p><div class="admin-grid"><div class="form"><label>Fecha a eliminar</label><select id="deleteDateSelect"></select><button class="btn danger" onclick="deleteDate()">ELIMINAR FECHA</button></div><div class="form"><label>Enfrentamiento a eliminar</label><select id="deleteMatchSelect"></select><button class="btn danger" onclick="deleteMatch()">ELIMINAR ENFRENTAMIENTO</button></div></div></div>
-<div class="card" style="margin-top:18px"><h3>Cargar / modificar resultado</h3><div class="form">
-<label>Enfrentamiento</label><select id="matchSelect" onchange="loadSelectedMatch()"></select>
-<label>Resultado del enfrentamiento</label><input id="scoreInput" placeholder="Ej. 3 - 2">
-<button id="saveScoreBtn" class="btn primary" onclick="saveScore()">GUARDAR / MODIFICAR RESULTADO</button><div id="scoreHelp" class="muted">El resultado final se habilita cuando ya hay al menos un partido individual cargado.</div>
-</div></div>
-<div class="card" style="margin-top:18px"><h3>Partidos individuales del enfrentamiento</h3><p class="muted">Elegí el enfrentamiento y luego los jugadores. No hace falta usar Ctrl ni seleccionar varios a la vez.</p><div class="form"><label>Enfrentamiento seleccionado</label><select id="rubberMatchSelect" onchange="syncRubberMatch()"></select><label>Tipo</label><select id="rubberType" onchange="toggleRubberPlayers()"><option>Singles</option><option>Dobles</option></select><label>Nivel / categoría del partido</label><select id="rubberLevel"><option>Capitán</option><option>2</option><option>3</option><option>4</option><option>5</option><option>Mixto</option></select><p class="muted">En dobles podés combinar niveles (ej.: 3 + 4 vs 3 + 4). El nivel elegido acá identifica la participación y no limita la combinación de jugadores.</p><label>Jugador equipo A</label><select id="rubberA"></select><label>Jugador 2 equipo A <span class="muted">(solo dobles)</span></label><select id="rubberA2"></select><label>Jugador equipo B</label><select id="rubberB"></select><label>Jugador 2 equipo B <span class="muted">(solo dobles)</span></label><select id="rubberB2"></select><label>Resultado (sets)</label><input id="rubberScore" placeholder="Ej. 6/3 6/4"><label>Ganador</label><select id="rubberWinner"><option value="A">Equipo A</option><option value="B">Equipo B</option></select><button class="btn primary" onclick="addRubber()">AGREGAR PARTIDO</button></div><div id="rubberAdminList" class="admin-list" style="margin-top:14px"></div></div>
+<div class="card" style="margin-top:18px"><h3>Editor del torneo</h3><p class="muted">Para fechas, enfrentamientos, partidos individuales y resultados usá la pestaña <b>FIXTURE</b>. Cada elemento tendrá su botón EDITAR o BORRAR.</p><button class="btn dark" onclick="go('fixture')">IR AL FIXTURE</button></div>
 
 <div class="card" style="margin-top:18px"><h3>Seguridad</h3><div class="form"><label>Nuevo PIN de administrador</label><input id="newPin" type="password" inputmode="numeric" maxlength="8" placeholder="4 a 8 números"><button class="btn dark" onclick="changePin()">CAMBIAR PIN</button><button class="btn danger" onclick="logoutAdmin()">CERRAR SESIÓN</button></div></div>
 </div></section>
@@ -166,11 +163,11 @@ function initials(n){return n.split(' ').map(x=>x[0]).slice(0,2).join('').toUppe
 function teamOptions(){return Object.keys(state.teams).map(k=>`<option value="${k}">${teamName(k)}</option>`).join('')}
 
 function renderHomeTeams(){let el=document.getElementById('homeTeams');el.innerHTML=Object.keys(state.teams).map(k=>`<div class="team-card" onclick="showTeam('${k}')"><div class="team-icon">${state.teams[k].icon}</div><h3>${teamName(k)}</h3><small>${state.players.filter(p=>p.team===k).length} jugadores</small></div>`).join('')||'<div class="empty" style="grid-column:1/-1"><strong>La competencia empieza acá</strong>Todavía no hay equipos cargados.</div>'}
-function renderTeams(){let el=document.getElementById('teamsGrid');el.innerHTML=Object.keys(state.teams).map(k=>`<div class="team-card" onclick="showTeam('${k}')"><div class="team-icon">${state.teams[k].icon}</div><h3>${teamName(k)}</h3><small>${state.players.filter(p=>p.team===k).length} jugadores</small></div>`).join('')||'<div class="empty" style="grid-column:1/-1"><strong>No hay equipos</strong></div>'}
+function renderTeams(){let el=document.getElementById('teamsGrid');el.innerHTML=Object.keys(state.teams).map(k=>`<div class="team-card" onclick="showTeam('${k}')"><div class="team-icon">${state.teams[k].icon}</div><h3>${teamName(k)}</h3><small>${state.players.filter(p=>p.team===k).length} jugadores</small>${adminAuth?`<div style="margin-top:10px"><button class="btn small dark" onclick="event.stopPropagation();openTeamEditor('${k}')">EDITAR EQUIPO</button></div>`:''}</div>`).join('')||'<div class="empty" style="grid-column:1/-1"><strong>No hay equipos</strong></div>'}
 function showTeam(k){let ps=state.players.filter(p=>p.team===k);let html=`<div class="modal-head"><div><div style="font-size:40px">${state.teams[k].icon}</div><h2>${teamName(k)}</h2><p>${ps.length} jugadores</p></div><button class="close" onclick="closeModal()">×</button></div>`;['Capitán','2','3','4','5'].forEach(l=>{let a=ps.filter(p=>p.level===l);if(!a.length)return;html+=`<h4 style="background:#07100d;color:#2ed15d;padding:10px;border-radius:8px">${l==='Capitán'?'👑 NIVEL CAPITÁN':'🎾 NIVEL '+l}</h4>`+a.map(p=>`<div style="padding:12px 0;border-bottom:1px solid #dfe6e2;display:flex;gap:10px;align-items:center;cursor:pointer" onclick="closeModal();showPlayer('${p.id}')"><div class="avatar" style="background:#193328;color:white">${initials(p.name)}</div><strong>${p.name}</strong></div>`).join('')});document.getElementById('modal').innerHTML=html;document.getElementById('modalbg').classList.add('open')}
 function closeModal(){document.getElementById('modalbg').classList.remove('open')}
 
-function renderPlayers(){let q=(document.getElementById('playerSearch')?.value||'').toLowerCase();let ps=state.players.filter(p=>String(p?.name||'').toLowerCase().includes(q));document.getElementById('playersGrid').innerHTML=ps.map(p=>`<div class="player-card" onclick="showPlayer('${p.id}')"><div class="avatar">${initials(p.name)}</div><div><strong>${p.name}</strong><div class="muted">${teamName(p.team)} · Nivel ${p.level}</div></div></div>`).join('')||'<div class="empty" style="grid-column:1/-1">No se encontraron jugadores.</div>'}
+function renderPlayers(){let q=(document.getElementById('playerSearch')?.value||'').toLowerCase();let ps=state.players.filter(p=>String(p?.name||'').toLowerCase().includes(q));document.getElementById('playersGrid').innerHTML=ps.map((p,i)=>`<div class="player-card" onclick="showPlayer('${p.id}')"><div class="avatar">${initials(p.name)}</div><div style="flex:1"><strong>${p.name}</strong><div class="muted">${teamName(p.team)} · Nivel ${p.level}</div>${adminAuth?`<div style="margin-top:8px"><button class="btn small dark" onclick="event.stopPropagation();editPlayer(${state.players.indexOf(p)})">EDITAR JUGADOR</button></div>`:''}</div></div>`).join('')||'<div class="empty" style="grid-column:1/-1">No se encontraron jugadores.</div>'}
 
 function playerStats(pid){
 let s={played:0,wins:0,losses:0,singles:0,doubles:0,setsW:0,setsL:0,gamesW:0,gamesL:0};
@@ -188,7 +185,6 @@ function showPlayer(pid){let p=state.players.find(x=>x.id===pid);if(!p)return;le
 
 function renderMatches(){document.getElementById('matchTabs').innerHTML=state.dates.map(d=>`<button class="tab ${d.id===activeDate?'active':''}" onclick="activeDate=${d.id};renderMatches()">${d.title}</button>`).join('');let d=state.dates.find(x=>x.id===activeDate)||state.dates[0];if(!d){document.getElementById('matchesList').innerHTML='<div class="empty"><strong>No hay fechas</strong>La organización podrá crearlas desde Admin.</div>';return}document.getElementById('matchesList').innerHTML=(d.matches||[]).map(m=>matchSeries(m,d)).join('')}
 function matchSeries(m,d){let body=(m.rubbers||[]).map((r,i)=>{let aNames=(r.a||'').split(',').map(id=>state.players.find(p=>p.id===id)?.name||id).join(' / ');let bNames=(r.b||'').split(',').map(id=>state.players.find(p=>p.id===id)?.name||id).join(' / ');return `<div class="rubber"><div class="type"><b>${r.type}</b><br><span class="muted">Nivel ${r.level}</span></div><div><div class="${r.winner?.split(',').some(x=>(r.a||'').split(',').includes(x))?'winner':''}">${aNames}</div><div class="muted">vs</div><div class="${r.winner?.split(',').some(x=>(r.b||'').split(',').includes(x))?'winner':''}">${bNames}</div></div><div><b>${r.score||'Pendiente'}</b></div><div class="status">${r.score?'Finalizado':'Pendiente'}</div></div>`}).join('')||'<div class="empty">Todavía no hay partidos individuales cargados.</div>';return `<div class="card"><div class="match-head"><div><div class="match-meta">${d.period||''} · ${m.status==='Finalizado'?'Finalizado':(partialScore(m).total?'En juego':'Programado')}</div><div class="match-teams"><strong>${teamName(m.a)}</strong><div class="score">${partialScore(m).total?partialScore(m).a+' - '+partialScore(m).b:'Pendiente'}</div><strong>${teamName(m.b)}</strong></div></div></div><button class="expand" onclick="toggleSeries('${m.id}',this)">＋ VER PARTIDOS</button><div id="series-${m.id}" class="series-body">${body}</div></div>`}
-function toggleSeries(id,b){let e=document.getElementById('series-'+id);e.classList.toggle('open');b.textContent=e.classList.contains('open')?'− OCULTAR PARTIDOS':'＋ VER PARTIDOS'}
 
 function parseTeamScore(str){
   if(!str)return null;
@@ -217,127 +213,26 @@ function renderStandings(){
   let rows=Object.keys(state.teams).map(teamStanding).sort((a,b)=>b.points-a.points||b.wins-a.wins||b.matchesW-a.matchesW||b.setDiff-a.setDiff||b.gameDiff-a.gameDiff);
   document.getElementById('standingsTable').innerHTML=rows.length?`<div class="table-wrap"><table class="standings"><thead><tr><th>#</th><th>Equipo</th><th>PJ</th><th>PG</th><th>PP</th><th>PTS</th><th>Part. G</th><th>Part. P</th><th>Sets</th><th>Games</th><th>Dif. Sets</th><th>Dif. Games</th></tr></thead><tbody>${rows.map((s,i)=>`<tr><td class="rank">${i+1}</td><td><b>${state.teams[s.team]?.icon||'🎾'} ${teamName(s.team)}</b></td><td>${s.played}</td><td>${s.wins}</td><td>${s.losses}</td><td><b>${s.points}</b></td><td>${s.matchesW}</td><td>${s.matchesL}</td><td>${s.setsW}-${s.setsL}</td><td>${s.gamesW}-${s.gamesL}</td><td>${s.setDiff>=0?'+':''}${s.setDiff}</td><td>${s.gameDiff>=0?'+':''}${s.gameDiff}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty"><strong>Todavía no hay equipos.</strong>La tabla aparecerá automáticamente cuando cargues equipos y resultados.</div>';
 }
-function showMatch(id){let x=findMatch(id);if(!x)return;let d=x[0],m=x[1];let body=(m.rubbers||[]).map(r=>{let a=(r.a||'').split(',').filter(Boolean).map(id=>state.players.find(p=>p.id===id)?.name||id).join(' / '),b=(r.b||'').split(',').filter(Boolean).map(id=>state.players.find(p=>p.id===id)?.name||id).join(' / ');return `<div style="padding:12px 0;border-bottom:1px solid var(--line)"><b>${r.type} · Nivel ${r.level}</b><div class="muted">${a} vs ${b} · ${r.score||'Pendiente'}</div></div>`}).join('')||'<div class="empty">No hay partidos individuales cargados.</div>';document.getElementById('modal').innerHTML=`<div class="modal-head"><div><div class="muted">${d.title} · ${d.period||''}</div><h2>${teamName(m.a)} vs ${teamName(m.b)}</h2><p>${m.score||'Pendiente'} · ${m.status||'Pendiente'}</p></div><button class="close" onclick="closeModal()">×</button></div>${body}`;document.getElementById('modalbg').classList.add('open')}
-
-function partialScore(m){
-  let a=0,b=0;
-  (m.rubbers||[]).forEach(r=>{
-    if(!r.winner)return;
-    let w=String(r.winner).split(',').filter(Boolean);
-    let aa=String(r.a||'').split(',').filter(Boolean),bb=String(r.b||'').split(',').filter(Boolean);
-    if(w.some(x=>aa.includes(x)))a++;
-    else if(w.some(x=>bb.includes(x)))b++;
-  });
-  return {a,b,total:a+b};
-}
-function fixtureMatchCard(d,m){
-  let ps=partialScore(m),partial=ps.total?`${teamName(m.a)} ${ps.a}-${ps.b} ${teamName(m.b)}`:'Resultado parcial: pendiente';
-  let finalScore=parseTeamScore(m.score);
-  let final= m.status==='Finalizado'&&finalScore ? `<div class="muted" style="margin-top:7px">Resultado final: <b>${teamName(m.a)} ${finalScore.a}-${finalScore.b} ${teamName(m.b)}</b></div>` : '';
-  let rubbers=(m.rubbers||[]).map((r,i)=>{
-    let an=(r.a||'').split(',').filter(Boolean).map(id=>state.players.find(p=>p.id===id)?.name||id).join(' / ');
-    let bn=(r.b||'').split(',').filter(Boolean).map(id=>state.players.find(p=>p.id===id)?.name||id).join(' / ');
-    let winnerA=(r.winner||'').split(',').some(x=>(r.a||'').split(',').includes(x));
-    return `<div style="padding:10px 0;border-top:1px solid var(--line);display:grid;grid-template-columns:80px 1fr 90px;gap:10px;align-items:center"><div><b>${r.type}</b><div class="muted">Nivel ${r.level}</div></div><div><b class="${winnerA?'winner':''}">${an}</b><span class="muted"> vs </span><b class="${!winnerA?'winner':''}">${bn}</b></div><div style="text-align:right"><b>${r.score||'Pendiente'}</b></div></div>`;
-  }).join('');
-  return `<div class="card" style="margin-top:12px"><div style="display:flex;justify-content:space-between;gap:15px;align-items:flex-start"><div><div class="muted">${d.period||''}</div><h3 style="margin:5px 0 8px">${teamName(m.a)} <span class="muted">vs</span> ${teamName(m.b)}</h3><div style="font-size:22px;font-weight:900">${partial}</div>${final}</div><div class="status">${m.status==='Finalizado'?'Finalizado':ps.total?'En juego':'Programado'}</div></div>${rubbers?`<div style="margin-top:14px">${rubbers}</div>`:'<div class="muted" style="margin-top:14px">Todavía no hay partidos individuales cargados.</div>'}<div style="margin-top:12px"><button class="btn small dark" onclick="showMatch('${m.id}')">VER DETALLE</button></div></div>`;
-}
-
-function renderFixture(){
-  let tools='';
-  if(adminAuth){
-    tools=`<div class="card" style="margin-bottom:18px"><h3>Crear fecha</h3><p class="muted">Cargá la fecha y su período directamente desde FIXTURE.</p><div class="admin-grid"><div class="form"><label>Nombre de la fecha</label><input id="dateTitle" placeholder="Fecha 1"></div><div class="form"><label>Período</label><input id="datePeriod" placeholder="18 MAY · 25 MAY"></div></div><button class="btn primary" style="margin-top:12px" onclick="addDateFromFixture()">CREAR FECHA</button></div>
-    <div class="card" style="margin-bottom:18px"><h3>Crear enfrentamiento</h3><p class="muted">Primero se publica el enfrentamiento sin resultado. El resultado se carga después de que comiencen a jugarse los partidos individuales.</p><div class="admin-grid"><div class="form"><label>Fecha</label><select id="fixtureMatchDate"></select></div><div class="form"><label>Equipo 1</label><select id="fixtureMatchA"></select></div><div class="form"><label>Equipo 2</label><select id="fixtureMatchB"></select></div></div><button class="btn primary" style="margin-top:12px" onclick="addMatchFromFixture()">CREAR ENFRENTAMIENTO</button></div>`;
-  }else{
-    tools=`<div class="notice" style="margin-bottom:18px"><b>FIXTURE PÚBLICO:</b> acá vas a ver todas las fechas y enfrentamientos. La organización puede crear y actualizar el fixture desde Administración.</div>`;
-  }
-  document.getElementById('fixtureAdminTools').innerHTML=tools;
-  if(adminAuth){
-    document.getElementById('fixtureMatchDate').innerHTML=state.dates.map(d=>`<option value="${d.id}">${d.title}</option>`).join('')||'<option value="">Creá una fecha primero</option>';
-    document.getElementById('fixtureMatchA').innerHTML=teamOptions()||'<option value="">Creá equipos primero</option>';
-    document.getElementById('fixtureMatchB').innerHTML=teamOptions()||'<option value="">Creá equipos primero</option>';
-  }
-  document.getElementById('fixtureList').innerHTML=state.dates.map(d=>`<div class="card" style="margin-bottom:16px"><div style="display:flex;justify-content:space-between;gap:15px;align-items:flex-start"><div><h3 style="margin:0 0 5px">${d.title}</h3><div class="muted">${d.period||'Período a definir'}</div></div><div class="status">${(d.matches||[]).length} enfrentamientos</div></div><div style="margin-top:14px">${(d.matches||[]).map(m=>fixtureMatchCard(d,m)).join('')||'<div class="muted" style="padding-top:12px">No hay enfrentamientos cargados todavía.</div>'}</div></div>`).join('')||'<div class="empty"><strong>Fixture vacío</strong>La organización todavía no creó fechas.</div>';
-}
-function addDateFromFixture(){
-  if(!adminAuth){requestAdmin();return}
-  let title=document.getElementById('dateTitle').value.trim(),period=document.getElementById('datePeriod').value.trim();
-  if(!title){toast('Escribí el nombre de la fecha');return}
-  state.dates.push({id:'d'+Date.now(),title,period,matches:[]});
-  persist('Fecha creada').then(()=>go('fixture'));
-}
-function addMatchFromFixture(){
-  if(!adminAuth){requestAdmin();return}
-  let d=state.dates.find(x=>String(x.id)===document.getElementById('fixtureMatchDate').value),a=document.getElementById('fixtureMatchA').value,b=document.getElementById('fixtureMatchB').value;
-  if(!d||!a||!b||a===b){toast('Elegí una fecha y dos equipos distintos');return}
-  let id='m'+Date.now();d.matches=d.matches||[];d.matches.push({id,a,b,score:'Pendiente',status:'Pendiente',rubbers:[]});
-  persist('Enfrentamiento creado').then(()=>go('fixture'));
-}
-
+function showMatch(id){let x=findMatch(id);if(!x)return;let d=x[0],m=x[1],ps=partialScore(m);let body=(m.rubbers||[]).map(r=>{let a=(r.a||'').split(',').filter(Boolean).map(id=>state.players.find(p=>p.id===id)?.name||id).join(' / '),b=(r.b||'').split(',').filter(Boolean).map(id=>state.players.find(p=>p.id===id)?.name||id).join(' / ');return `<div style="padding:12px 0;border-bottom:1px solid var(--line)"><b>${r.type} · Nivel ${r.level}</b><div class="muted">${formatLabel(r.format)} · ${a} vs ${b}</div><div style="margin-top:4px"><b>${r.score||'Pendiente'}</b></div></div>`}).join('')||'<div class="empty">No hay partidos individuales cargados.</div>';document.getElementById('modal').innerHTML=`<div class="modal-head"><div><div class="muted">${d.title} · ${d.period||''}</div><h2>${teamName(m.a)} vs ${teamName(m.b)}</h2><p>Parcial: <b>${ps.a}-${ps.b}</b> · ${m.status||'Pendiente'}</p></div><button class="close" onclick="closeModal()">×</button></div>${body}`;document.getElementById('modalbg').classList.add('open')}
 
 function statsMode(mode,b){statsView=mode;document.querySelectorAll('#stats .tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');renderStats()}
 function renderStats(){if(statsView==='players'){let rows=state.players.map(p=>{let s=playerStats(p.id);return `<tr onclick="showPlayer('${p.id}')" style="cursor:pointer"><td class="rank">${p.name}</td><td>${teamName(p.team)}</td><td>${s.played}</td><td>${s.wins}</td><td>${s.losses}</td><td>${s.winPct}%</td><td>${s.setsW}</td><td>${s.setsL}</td><td>${s.setDiff>0?'+':''}${s.setDiff}</td><td>${s.gamesW}</td><td>${s.gamesL}</td><td>${s.gameDiff>0?'+':''}${s.gameDiff}</td><td>${s.singles}</td><td>${s.doubles}</td></tr>`}).join('');document.getElementById('statsTable').innerHTML=`<div class="table-wrap"><table class="standings"><tr><th>Jugador</th><th>Equipo</th><th>Part.</th><th>G</th><th>P</th><th>%</th><th>Sets G</th><th>Sets P</th><th>Dif. Sets</th><th>Games G</th><th>Games P</th><th>Dif. Games</th><th>Singles</th><th>Dobles</th></tr>${rows||'<tr><td colspan="14">Sin datos.</td></tr>'}</table></div>`}else{let rows=Object.keys(state.teams).map(k=>{let ps=state.players.filter(p=>p.team===k),ss=ps.reduce((a,p)=>{let s=playerStats(p.id);a.played+=s.played;a.wins+=s.wins;a.losses+=s.losses;a.setsW+=s.setsW;a.setsL+=s.setsL;a.gamesW+=s.gamesW;a.gamesL+=s.gamesL;return a},{played:0,wins:0,losses:0,setsW:0,setsL:0,gamesW:0,gamesL:0});return `<tr><td class="rank">${teamName(k)}</td><td>${ss.played}</td><td>${ss.wins}</td><td>${ss.losses}</td><td>${ss.setsW}</td><td>${ss.setsL}</td><td>${ss.setsW-ss.setsL}</td><td>${ss.gamesW}</td><td>${ss.gamesL}</td><td>${ss.gamesW-ss.gamesL}</td></tr>`}).join('');document.getElementById('statsTable').innerHTML=`<div class="table-wrap"><table class="standings"><tr><th>Equipo</th><th>Part. individuales</th><th>G</th><th>P</th><th>Sets G</th><th>Sets P</th><th>Dif. Sets</th><th>Games G</th><th>Games P</th><th>Dif. Games</th></tr>${rows}</table></div>`}}
 
 function renderRules(){document.getElementById('rulesList').innerHTML=rules.map((r,i)=>`<div class="card rule ${i===0?'fair':''}"><h3>${i+1}. ${r[0]}</h3><p>${r[1]}</p></div>`).join('')}
 
-function renderAdmin(){
- const keep=document.getElementById('matchSelect')?.value||document.getElementById('rubberMatchSelect')?.value||'';
- document.getElementById('teamKey').innerHTML='<option value="__new__">+ Crear equipo nuevo</option>'+Object.keys(state.teams).map(k=>`<option value="${k}">${teamName(k)}</option>`).join('');
- document.getElementById('teamKey').onchange=teamSelected;
- document.getElementById('playerTeam').innerHTML=teamOptions()||'<option value="">Creá un equipo primero</option>';
- document.getElementById('matchA').innerHTML=teamOptions(); document.getElementById('matchB').innerHTML=teamOptions();
- document.getElementById('matchDate').innerHTML=state.dates.map(d=>`<option value="${d.id}">${d.title}</option>`).join('')||'<option value="">Creá una fecha primero</option>';
- document.getElementById('adminPlayers').innerHTML=state.players.map((p,i)=>`<div class="adminitem"><div class="avatar">${initials(p.name)}</div><div><strong>${p.name}</strong><div class="muted">${teamName(p.team)} · Nivel ${p.level}</div></div><div class="spacer"><button class="btn small dark" onclick="editPlayer(${i})">EDITAR</button> <button class="btn small danger" onclick="deletePlayer(${i})">BORRAR</button></div></div>`).join('')||'<div class="empty">No hay jugadores.</div>';
- let opts=[];state.dates.forEach(d=>(d.matches||[]).forEach(m=>opts.push(`<option value="${m.id}">${d.title} · ${teamName(m.a)} vs ${teamName(m.b)}</option>`)));
- const html=opts.join('')||'<option value="">No hay enfrentamientos</option>';
- ['matchSelect','rubberMatchSelect','deleteMatchSelect'].forEach(id=>document.getElementById(id).innerHTML=html);
- if(keep && [...document.getElementById('matchSelect').options].some(o=>o.value===keep)){document.getElementById('matchSelect').value=keep;document.getElementById('rubberMatchSelect').value=keep;}
- else if(opts.length){document.getElementById('matchSelect').value=opts[0].match(/value="([^"]+)"/)?.[1]||'';document.getElementById('rubberMatchSelect').value=document.getElementById('matchSelect').value;}
- document.getElementById('deleteDateSelect').innerHTML=state.dates.map(d=>`<option value="${d.id}">${d.title}</option>`).join('')||'<option value="">No hay fechas</option>';
- loadSelectedMatch();
-}
-
+function renderAdmin(){const sel=document.getElementById('teamKey');if(!sel)return;sel.innerHTML='<option value="__new__">+ Crear equipo nuevo</option>'+Object.keys(state.teams).map(k=>`<option value="${k}">${teamName(k)}</option>`).join('');sel.onchange=teamSelected;document.getElementById('playerTeam').innerHTML=teamOptions()||'<option value="">Creá un equipo primero</option>';document.getElementById('adminPlayers').innerHTML=state.players.map((p,i)=>`<div class="adminitem"><div class="avatar">${initials(p.name)}</div><div><strong>${p.name}</strong><div class="muted">${teamName(p.team)} · Nivel ${p.level}</div></div><div class="spacer"><button class="btn small dark" onclick="editPlayer(${i})">EDITAR</button><button class="btn small danger" onclick="deletePlayer(${i})">BORRAR</button></div></div>`).join('')||'<div class="empty">No hay jugadores.</div>';}
+function openTeamEditor(k){if(!adminAuth)return requestAdmin();let t=state.teams[k];if(!t)return;document.getElementById('modal').innerHTML=`<div class="modal-head"><div><div class="muted">EDITAR EQUIPO</div><h2>${t.name}</h2></div><button class="close" onclick="closeModal()">×</button></div><div class="form"><label>Nombre del equipo</label><input id="editTeamName" value="${t.name}"><label>Icono</label><select id="editTeamIcon"><option>🎾</option><option>🏆</option><option>🏅</option><option>🎯</option><option>⭐</option><option>🔥</option><option>⚡</option><option>🦅</option><option>🦁</option><option>🐺</option></select><button class="btn primary" onclick="saveTeamEditor('${k}')">GUARDAR CAMBIOS</button></div>`;document.getElementById('editTeamIcon').value=t.icon||'🎾';document.getElementById('modalbg').classList.add('open')}
+function saveTeamEditor(k){let t=state.teams[k];if(!t)return;let n=document.getElementById('editTeamName').value.trim();if(!n){toast('Escribí un nombre');return}t.name=n;t.icon=document.getElementById('editTeamIcon').value;closeModal();persist('Equipo modificado')}
 function teamSelected(){let k=document.getElementById('teamKey').value;if(k!=='__new__'&&state.teams[k]){document.getElementById('teamName').value=state.teams[k].name;document.getElementById('teamIcon').value=state.teams[k].icon}else{document.getElementById('teamName').value='';document.getElementById('teamIcon').value='🎾'}}
 function saveTeam(){let sel=document.getElementById('teamKey'),k=sel.value,n=document.getElementById('teamName').value.trim();if(!n){toast('Escribí un nombre');return}if(k==='__new__'){k='T'+Date.now();state.teams[k]={name:n,icon:document.getElementById('teamIcon').value};sel.value=k}else state.teams[k]={name:n,icon:document.getElementById('teamIcon').value};persist('Equipo guardado')}
-function deleteTeam(){let k=document.getElementById('teamKey').value;if(!k||k==='__new__'||!state.teams[k])return;let n=teamName(k);if(!confirm('¿Borrar '+n+'? También se quitarán sus jugadores y enfrentamientos.'))return;delete state.teams[k];state.players=state.players.filter(p=>p.team!==k);state.dates.forEach(d=>d.matches=d.matches.filter(m=>m.a!==k&&m.b!==k));persist('Equipo borrado')}
-function editPlayer(i){let p=state.players[i],n=prompt('Nombre del jugador:',p.name);if(n===null)return;let level=prompt('Nivel (Capitán, 2, 3, 4 o 5):',p.level);if(level===null)return;let team=prompt('Código de equipo: '+Object.keys(state.teams).map(k=>k+'='+teamName(k)).join(' | '),p.team);if(team===null)return;if(!state.teams[team]){toast('Código de equipo inexistente');return}p.name=n.trim()||p.name;p.level=level;p.team=team;persist('Jugador modificado')}
+function deleteTeam(){let k=document.getElementById('teamKey').value;if(!k||k==='__new__'||!state.teams[k])return;let n=teamName(k);if(!confirm('¿Borrar '+n+'? También se quitarán sus jugadores y enfrentamientos.'))return;delete state.teams[k];state.players=state.players.filter(p=>p.team!==k);state.dates.forEach(d=>d.matches=(d.matches||[]).filter(m=>m.a!==k&&m.b!==k));persist('Equipo borrado')}
+function editPlayer(i){let p=state.players[i];if(!p)return;let n=prompt('Nombre del jugador:',p.name);if(n===null)return;let level=prompt('Nivel (Capitán, 2, 3, 4 o 5):',p.level);if(level===null)return;let team=prompt('Código de equipo: '+Object.keys(state.teams).map(k=>k+'='+teamName(k)).join(' | '),p.team);if(team===null)return;if(!state.teams[team]){toast('Código de equipo inexistente');return}p.name=n.trim()||p.name;p.level=level;p.team=team;persist('Jugador modificado')}
 function deletePlayer(i){if(!confirm('¿Borrar este jugador?'))return;state.players.splice(i,1);persist('Jugador borrado')}
 function addPlayer(){let n=document.getElementById('playerName').value.trim(),t=document.getElementById('playerTeam').value;if(!n||!t){toast('Completá nombre y equipo');return}state.players.push({id:'p'+Date.now(),name:n,team:t,level:document.getElementById('playerLevel').value});document.getElementById('playerName').value='';persist('Jugador agregado')}
-function deletePlayer(i){if(!confirm('¿Borrar este jugador?'))return;state.players.splice(i,1);persist('Jugador borrado')}
 function addDate(){go('fixture');if(adminAuth)setTimeout(()=>addDateFromFixture(),0);else requestAdmin()}
 function addMatch(){go('fixture');if(adminAuth)setTimeout(()=>addMatchFromFixture(),0);else requestAdmin()}
 function findMatch(id){for(const d of state.dates){let m=(d.matches||[]).find(x=>x.id===id);if(m)return[d,m]}}
 function playerOptions(team,placeholder='Seleccionar jugador'){let ps=state.players.filter(p=>p.team===team);return `<option value="">${placeholder}</option>`+ps.map(p=>`<option value="${p.id}">${p.name} · Nivel ${p.level}</option>`).join('')}
-function loadSelectedMatch(){
-  let id=document.getElementById('matchSelect')?.value||document.getElementById('rubberMatchSelect')?.value,x=findMatch(id);
-  let hasPlayed=!!(x&&x[1]&&(x[1].rubbers||[]).length);
-  let input=document.getElementById('scoreInput'),btn=document.getElementById('saveScoreBtn'),help=document.getElementById('scoreHelp');
-  if(input){input.value=x?.[1]?.score==='Pendiente'?'':(x?.[1]?.score||'');input.disabled=!hasPlayed;}
-  if(btn)btn.disabled=!hasPlayed;
-  if(help)help.textContent=hasPlayed?'Ya podés cargar o modificar el resultado final del enfrentamiento.':'El resultado final se habilita cuando ya hay al menos un partido individual cargado.';
-  if(x){document.getElementById('rubberMatchSelect').value=x[1].id;document.getElementById('rubberA').innerHTML=playerOptions(x[1].a);document.getElementById('rubberA2').innerHTML=playerOptions(x[1].a,'Sin segundo jugador');document.getElementById('rubberB').innerHTML=playerOptions(x[1].b);document.getElementById('rubberB2').innerHTML=playerOptions(x[1].b,'Sin segundo jugador');renderRubberAdmin(x[1]);toggleRubberPlayers()}
-}
-
-function syncRubberMatch(){let id=document.getElementById('rubberMatchSelect').value;document.getElementById('matchSelect').value=id;loadSelectedMatch()}
-function toggleRubberPlayers(){let dobles=document.getElementById('rubberType').value==='Dobles';document.getElementById('rubberA2').disabled=!dobles;document.getElementById('rubberB2').disabled=!dobles}
-function addRubber(){
-  let x=findMatch(document.getElementById('rubberMatchSelect').value);if(!x){toast('Elegí un enfrentamiento');return}
-  let m=x[1],a1=document.getElementById('rubberA').value,a2=document.getElementById('rubberA2').value,b1=document.getElementById('rubberB').value,b2=document.getElementById('rubberB2').value,score=document.getElementById('rubberScore').value.trim(),type=document.getElementById('rubberType').value,level=document.getElementById('rubberLevel').value;
-  if(!a1||!b1||!score){toast('Completá los jugadores y el resultado');return}
-  if(type==='Dobles'&&(!a2||!b2)){toast('En dobles elegí los dos jugadores de cada equipo');return}
-  let a=[a1,...(type==='Dobles'?[a2]:[])],b=[b1,...(type==='Dobles'?[b2]:[])];
-  if(new Set([...a,...b]).size!==a.length+b.length){toast('No podés repetir un jugador en el mismo partido');return}
-  let side=document.getElementById('rubberWinner').value;m.rubbers=m.rubbers||[];
-  m.rubbers.push({id:'r'+Date.now(),type,level,a:a.join(','),b:b.join(','),score,winner:side==='A'?a.join(','):b.join(',')});
-  m.status='En juego';
-  let ps=partialScore(m);m.partialScore=`${ps.a} - ${ps.b}`;
-  persist('Partido individual agregado').then(()=>{document.getElementById('rubberScore').value='';loadSelectedMatch();go('fixture')})
-}
-function deleteRubber(rid){let x=findMatch(document.getElementById('rubberMatchSelect').value);if(!x)return;x[1].rubbers=(x[1].rubbers||[]).filter(r=>r.id!==rid);persist('Partido individual eliminado').then(()=>loadSelectedMatch())}
-function renderRubberAdmin(m){document.getElementById('rubberAdminList').innerHTML=(m.rubbers||[]).map(r=>{let an=(r.a||'').split(',').map(id=>state.players.find(p=>p.id===id)?.name||id).join(' / '),bn=(r.b||'').split(',').map(id=>state.players.find(p=>p.id===id)?.name||id).join(' / ');return `<div class="adminitem"><div><strong>${r.type} · Nivel ${r.level}</strong><div class="muted">${an} vs ${bn} · ${r.score}</div></div><div class="spacer"><button class="btn small danger" onclick="deleteRubber('${r.id}')">BORRAR</button></div></div>`}).join('')||'<div class="empty">No hay partidos individuales cargados.</div>'}
-function deleteDate(){let id=document.getElementById('deleteDateSelect').value,d=state.dates.find(x=>String(x.id)===id);if(!d)return;if(!confirm(`¿Eliminar ${d.title}? También se eliminarán todos sus enfrentamientos y resultados.`))return;state.dates=state.dates.filter(x=>String(x.id)!==id);activeDate=state.dates[0]?.id||1;persist('Fecha eliminada')}
-function deleteMatch(){let id=document.getElementById('deleteMatchSelect').value,x=findMatch(id);if(!x)return;if(!confirm(`¿Eliminar el enfrentamiento ${teamName(x[1].a)} vs ${teamName(x[1].b)}? También se eliminarán sus partidos y resultados.`))return;x[0].matches=(x[0].matches||[]).filter(m=>m.id!==id);persist('Enfrentamiento eliminado')}
-function saveScore(){let x=findMatch(document.getElementById('matchSelect').value),s=document.getElementById('scoreInput').value.trim();if(!x){toast('Elegí un enfrentamiento');return}if(!(x[1].rubbers||[]).length){toast('Primero cargá al menos un partido jugado');return}let sc=parseTeamScore(s);if(!sc){toast('Usá un resultado como 3 - 2');return}x[1].score=`${sc.a} - ${sc.b}`;x[1].status='Finalizado';persist('Resultado guardado / modificado')}
 async function requestAdmin(){try{let r=await fetch('/api/auth');let j=await r.json();if(j.authenticated){adminAuth=true;go('admin');return}}catch(e){}document.getElementById('pinbg').style.display='flex';setTimeout(()=>document.getElementById('pinInput').focus(),50)}
 function closePin(){document.getElementById('pinbg').style.display='none';document.getElementById('pinError').textContent='';document.getElementById('pinInput').value=''}
 async function checkPin(){let v=document.getElementById('pinInput').value;try{let r=await fetch('/api/auth',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'login',pin:v})});let j=await r.json();if(r.ok){adminAuth=true;closePin();go('admin')}else document.getElementById('pinError').textContent=j.error||'PIN incorrecto'}catch(e){document.getElementById('pinError').textContent='No se pudo conectar con el servidor.'}}
