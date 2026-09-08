@@ -1,4 +1,4 @@
-import { json, nowIso, randomBytes, b64url, sha256, pbkdf2, fromB64url, sessionCookie, clearSessionCookie, requireAdmin, cleanSessions } from './_utils.js';
+import { json, nowIso, randomBytes, b64url, sha256, pbkdf2, fromB64url, sessionCookie, clearSessionCookie, requireAdmin, cleanSessions } from '../_utils.js';
 
 async function ensureTables(env) {
   if (!env?.DB) throw new Error('D1 binding DB no disponible');
