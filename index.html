@@ -153,7 +153,27 @@ let statsView='players',activeDate=1;
 const rules=[['FAIR PLAY','Esta es la regla principal. Competimos, compartimos y disfrutamos del tenis. Respeto por rivales, compañeros y organización; buena conducta, honestidad y espíritu deportivo.'],['Formato','Participarán 4 equipos, pudiendo ampliarse a 5 según las inscripciones. Todos juegan contra todos.'],['Armado de equipos y niveles','Los equipos y los niveles de cada jugador serán definidos por los profesores, buscando lograr una competencia equilibrada.'],['Niveles','Las categorías son Nivel Capitán, Nivel 2, Nivel 3, Nivel 4 y Nivel 5.'],['Fechas','Cada fecha tendrá un período de inicio y una fecha límite. Los partidos pueden jugarse cualquier día dentro de ese período.'],['Partidos','La organización define la estructura de cada fecha y sus modalidades. Puede haber singles y dobles y diferentes niveles.'],['Dobles mixtos','En dobles se pueden combinar jugadores de distintos niveles dentro del mismo equipo y enfrentarlos contra otra pareja con cualquier combinación de niveles. Por ejemplo: Nivel 3 + Nivel 4 vs Nivel 3 + Nivel 4.'],['Elección de jugadores','Los capitanes deciden qué jugador ocupa cada participación dentro del nivel correspondiente. En dobles, una pareja puede combinar jugadores de distintos niveles.'],['Reemplazos','El reemplazo normal debe ser por un jugador del mismo nivel. Excepcionalmente podrá utilizarse otro nivel con autorización.'],['Puntuación','Cada partido ganado suma 1 punto dentro del enfrentamiento. El equipo ganador de cada fecha suma 1 punto en la tabla general.'],['Tabla general','Los desempates se ordenan por partidos ganados, luego sets ganados y luego games ganados.'],['Estadísticas','Partidos jugados, ganados y perdidos; porcentaje de victorias; sets y games ganados y perdidos; diferencia de sets y games; singles, dobles y equipo se calculan automáticamente.'],['Resultados y situaciones especiales','Los resultados son cargados por la organización y pueden corregirse.']];
 
 async function persist(msg='Cambios guardados automáticamente'){
-try{const r=await fetch('/api/state',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({state})});if(r.status===401){toast('Sesión de administrador vencida');requestAdmin();return false}if(!r.ok)throw 0;const j=await r.json();lastUpdatedAt=j.updatedAt;toast(msg);renderAll();return true}catch(e){toast('No se pudo guardar. Revisá la conexión.');return false}}
+  try{
+    const r=await fetch('/api/state',{method:'POST',headers:{'content-type':'application/json'},credentials:'same-origin',body:JSON.stringify({state})});
+    const text=await r.text();
+    let j={};
+    try{j=text?JSON.parse(text):{}}catch{}
+    if(r.status===401){toast('Sesión de administrador vencida');requestAdmin();return false}
+    if(!r.ok){
+      console.error('Error /api/state:',r.status,j||text);
+      toast(j.detail||j.error||`No se pudo guardar (${r.status})`);
+      return false;
+    }
+    lastUpdatedAt=j.updatedAt||lastUpdatedAt;
+    toast(msg);
+    renderAll();
+    return true;
+  }catch(e){
+    console.error('Error de conexión /api/state:',e);
+    toast('No se pudo conectar con el servidor.');
+    return false;
+  }
+}
 
 function toast(m){let e=document.getElementById('toast');e.textContent=m;e.style.display='block';clearTimeout(window.__t);window.__t=setTimeout(()=>e.style.display='none',1800)}
 function go(p){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));let el=document.getElementById(p);if(!el)return;el.classList.add('active');document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===p));window.scrollTo(0,0);renderAll()}
@@ -238,7 +258,11 @@ function closePin(){document.getElementById('pinbg').style.display='none';docume
 async function checkPin(){let v=document.getElementById('pinInput').value;try{let r=await fetch('/api/auth',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'login',pin:v})});let j=await r.json();if(r.ok){adminAuth=true;closePin();go('admin')}else document.getElementById('pinError').textContent=j.error||'PIN incorrecto'}catch(e){document.getElementById('pinError').textContent='No se pudo conectar con el servidor.'}}
 async function changePin(){let v=document.getElementById('newPin').value;if(!/^\d{4,8}$/.test(v)){toast('El PIN debe tener 4 a 8 números');return}try{let r=await fetch('/api/pin',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({pin:v})});let j=await r.json();toast(r.ok?'PIN actualizado':(j.error||'No se pudo actualizar'));if(r.ok)document.getElementById('newPin').value=''}catch(e){toast('No se pudo conectar con el servidor.')}}
 async function logoutAdmin(){try{await fetch('/api/auth',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'logout'})})}catch(e){}adminAuth=false;go('home')}
-function renderAll(){renderHomeTeams();renderTeams();renderPlayers();renderMatches();renderFixture();renderStats();renderStandings();renderRules();if(document.getElementById('admin').classList.contains('active'))renderAdmin()}
+function renderAll(){
+  const renders=[renderHomeTeams,renderTeams,renderPlayers,renderMatches,renderFixture,renderStats,renderStandings,renderRules];
+  renders.forEach(fn=>{try{fn()}catch(e){console.error('Error renderizando',fn.name,e)}});
+  try{if(document.getElementById('admin')?.classList.contains('active'))renderAdmin()}catch(e){console.error('Error renderizando admin',e)}
+}
 function normalizeState(raw){
   let s=raw&&typeof raw==='object'?raw:structuredClone(seed);
   if(!s.teams||typeof s.teams!=='object'||Array.isArray(s.teams))s.teams={};
@@ -249,7 +273,23 @@ function normalizeState(raw){
   s.dates=s.dates.map((d,i)=>{d=d&&typeof d==='object'?d:{};d.id=d.id??('d'+i);d.title=d.title||('Fecha '+(i+1));d.period=d.period||'';if(!Array.isArray(d.matches))d.matches=[];d.matches=d.matches.map((m,j)=>{m=m&&typeof m==='object'?m:{};m.id=m.id||('m'+i+'-'+j);m.a=m.a||'';m.b=m.b||'';m.score=m.score||'Pendiente';m.status=m.status||'Pendiente';if(!Array.isArray(m.rubbers))m.rubbers=[];return m});return d});
   return s;
 }
-async function loadState(){try{let r=await fetch('/api/state',{cache:'no-store'});if(!r.ok)throw 0;let j=await r.json();state=normalizeState(j.state);lastUpdatedAt=j.updatedAt;activeDate=state.dates[0]?.id||1;renderAll()}catch(e){state=normalizeState(state);toast('No se pudo cargar la base de datos.');renderAll()}}
+async function loadState(){
+  try{
+    const r=await fetch('/api/state',{cache:'no-store',credentials:'same-origin'});
+    const text=await r.text();
+    let j={};try{j=text?JSON.parse(text):{}}catch{}
+    if(!r.ok)throw new Error(j.detail||j.error||`HTTP ${r.status}`);
+    state=normalizeState(j.state);
+    lastUpdatedAt=j.updatedAt||null;
+    activeDate=state.dates[0]?.id||1;
+    renderAll();
+  }catch(e){
+    console.error('Error cargando /api/state:',e);
+    state=normalizeState(state);
+    renderAll();
+    toast('No se pudo cargar la base de datos: '+(e.message||'error del servidor'));
+  }
+}
 loadState();
 
 </script>
