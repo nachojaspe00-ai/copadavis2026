@@ -1,3 +1,4 @@
+```js
 import {
   json,
   nowIso,
@@ -8,8 +9,7 @@ import {
   sessionCookie,
   clearSessionCookie,
   requireAdmin,
-  cleanSessions,
-  fromB64url
+  cleanSessions
 } from './_utils.js';
 
 const MAX_ITERATIONS = 100000;
@@ -26,6 +26,7 @@ export async function onRequestPost({ request, env }) {
 
   await cleanSessions(env);
 
+  // LOGOUT
   if (action === 'logout') {
     return new Response(null, {
       status: 204,
@@ -35,6 +36,7 @@ export async function onRequestPost({ request, env }) {
     });
   }
 
+  // LOGIN
   if (action === 'login') {
     const pin = String(body.pin || '');
 
@@ -45,101 +47,66 @@ export async function onRequestPost({ request, env }) {
       );
     }
 
-    let cfg = await env.DB
-      .prepare('SELECT * FROM admin_config WHERE id=1')
-      .first();
+    // ---------------------------------------------------------
+    // EL ADMIN_PIN DE CLOUDFLARE ES LA FUENTE DE VERDAD
+    // ---------------------------------------------------------
 
-    // Primera configuración del administrador
-    if (!cfg) {
-      if (!env.ADMIN_PIN) {
-        return json(
-          { error: 'ADMIN_PIN no está configurado en Cloudflare.' },
-          500
-        );
-      }
-
-      const initial = String(env.ADMIN_PIN);
-      const salt = randomBytes(16);
-      const hash = await pbkdf2(
-        initial,
-        salt,
-        MAX_ITERATIONS
+    if (!env.ADMIN_PIN) {
+      return json(
+        {
+          error:
+            'ADMIN_PIN no está configurado en Cloudflare.'
+        },
+        500
       );
-
-      await env.DB
-        .prepare(
-          `INSERT OR IGNORE INTO admin_config
-          (id, pin_hash, salt, iterations, updated_at)
-          VALUES (1, ?, ?, ?, ?)`
-        )
-        .bind(
-          b64url(hash),
-          b64url(salt),
-          MAX_ITERATIONS,
-          nowIso()
-        )
-        .run();
-
-      cfg = await env.DB
-        .prepare('SELECT * FROM admin_config WHERE id=1')
-        .first();
     }
 
-    /*
-     * Si quedó guardada una configuración anterior
-     * con 120000 iteraciones, la regeneramos usando
-     * el ADMIN_PIN actual y el límite compatible con Cloudflare.
-     */
-    if (Number(cfg.iterations) > MAX_ITERATIONS) {
-      if (!env.ADMIN_PIN) {
-        return json(
-          {
-            error:
-              'La configuración del PIN necesita actualizarse. Configurá ADMIN_PIN en Cloudflare.'
-          },
-          500
-        );
-      }
+    const configuredPin = String(env.ADMIN_PIN);
 
-      const initial = String(env.ADMIN_PIN);
-      const salt = randomBytes(16);
-      const hash = await pbkdf2(
-        initial,
-        salt,
-        MAX_ITERATIONS
-      );
-
-      await env.DB
-        .prepare(
-          `UPDATE admin_config
-           SET pin_hash=?, salt=?, iterations=?, updated_at=?
-           WHERE id=1`
-        )
-        .bind(
-          b64url(hash),
-          b64url(salt),
-          MAX_ITERATIONS,
-          nowIso()
-        )
-        .run();
-
-      cfg = await env.DB
-        .prepare('SELECT * FROM admin_config WHERE id=1')
-        .first();
-    }
-
-    const hash = await pbkdf2(
-      pin,
-      fromB64url(cfg.salt),
-      Number(cfg.iterations)
-    );
-
-    if (b64url(hash) !== cfg.pin_hash) {
+    // Comparamos el PIN ingresado con el secreto de Cloudflare.
+    if (pin !== configuredPin) {
       return json(
         { error: 'PIN incorrecto.' },
         401
       );
     }
+
+    // ---------------------------------------------------------
+    // PIN CORRECTO
+    // ---------------------------------------------------------
+
+    // Generamos/actualizamos la configuración almacenada en D1.
+    const salt = randomBytes(16);
+
+    const hash = await pbkdf2(
+      configuredPin,
+      salt,
+      MAX_ITERATIONS
+    );
+
+    await env.DB
+      .prepare(
+        `INSERT INTO admin_config
+          (id, pin_hash, salt, iterations, updated_at)
+         VALUES (?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET
+           pin_hash=excluded.pin_hash,
+           salt=excluded.salt,
+           iterations=excluded.iterations,
+           updated_at=excluded.updated_at`
+      )
+      .bind(
+        1,
+        b64url(hash),
+        b64url(salt),
+        MAX_ITERATIONS,
+        nowIso()
+      )
+      .run();
+
+    // ---------------------------------------------------------
+    // CREAR SESIÓN
+    // ---------------------------------------------------------
 
     const token = b64url(randomBytes(32));
 
@@ -153,7 +120,9 @@ export async function onRequestPost({ request, env }) {
 
     await env.DB
       .prepare(
-        'INSERT INTO admin_sessions(token_hash,expires_at) VALUES(?,?)'
+        `INSERT INTO admin_sessions
+         (token_hash, expires_at)
+         VALUES (?, ?)`
       )
       .bind(tokenHash, exp)
       .run();
@@ -172,3 +141,4 @@ export async function onRequestPost({ request, env }) {
     400
   );
 }
+```
