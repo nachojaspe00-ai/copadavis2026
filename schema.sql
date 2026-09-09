@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS admin_config (
   id INTEGER PRIMARY KEY CHECK (id = 1),
   pin_hash TEXT NOT NULL,
   salt TEXT NOT NULL,
-  iterations INTEGER NOT NULL DEFAULT 120000,
+  iterations INTEGER NOT NULL DEFAULT 100000,
   updated_at TEXT NOT NULL
 );
 
