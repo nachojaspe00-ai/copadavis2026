@@ -129,6 +129,7 @@ header{height:74px;background:#070b0a;display:flex;align-items:center;padding:0 
 
 <div class="card" style="margin-top:18px"><h3>Fixture</h3><p class="muted">Las fechas y los enfrentamientos se crean desde la pestaña FIXTURE. Desde Administración se cargan los partidos individuales y los resultados.</p></div>
 <div class="card" style="margin-top:18px"><h3>Configuración del fixture</h3><p class="muted">Desde acá podés eliminar una fecha completa o solamente un enfrentamiento.</p><div class="admin-grid"><div class="form"><label>Fecha a eliminar</label><select id="deleteDateSelect"></select><button class="btn danger" onclick="deleteDate()">ELIMINAR FECHA</button></div><div class="form"><label>Enfrentamiento a eliminar</label><select id="deleteMatchSelect"></select><button class="btn danger" onclick="deleteMatch()">ELIMINAR ENFRENTAMIENTO</button></div></div></div>
+<div class="card" style="margin-top:18px;border:2px solid #b42318"><h3>Zona de limpieza</h3><p class="muted">Si querés empezar la Copa desde cero, podés borrar todos los equipos, jugadores, fechas, enfrentamientos y resultados. La base D1 y el acceso de administrador NO se borran.</p><button class="btn danger" onclick="clearAllData()">BORRAR TODO EL CONTENIDO</button></div>
 <div class="card" style="margin-top:18px"><h3>Cargar / modificar resultado</h3><div class="form">
 <label>Enfrentamiento</label><select id="matchSelect" onchange="loadSelectedMatch()"></select>
 <label>Resultado del enfrentamiento</label><input id="scoreInput" placeholder="Ej. 3 - 2">
@@ -240,7 +241,7 @@ function fixtureMatchCard(d,m){
     let winnerA=(r.winner||'').split(',').some(x=>(r.a||'').split(',').includes(x));
     return `<div style="padding:10px 0;border-top:1px solid var(--line);display:grid;grid-template-columns:80px 1fr 90px;gap:10px;align-items:center"><div><b>${r.type}</b><div class="muted">Nivel ${r.level}</div></div><div><b class="${winnerA?'winner':''}">${an}</b><span class="muted"> vs </span><b class="${!winnerA?'winner':''}">${bn}</b></div><div style="text-align:right"><b>${r.score||'Pendiente'}</b></div></div>`;
   }).join('');
-  return `<div class="card" style="margin-top:12px"><div style="display:flex;justify-content:space-between;gap:15px;align-items:flex-start"><div><div class="muted">${d.period||''}</div><h3 style="margin:5px 0 8px">${teamName(m.a)} <span class="muted">vs</span> ${teamName(m.b)}</h3><div style="font-size:22px;font-weight:900">${partial}</div>${final}</div><div class="status">${m.status==='Finalizado'?'Finalizado':ps.total?'En juego':'Programado'}</div></div>${rubbers?`<div style="margin-top:14px">${rubbers}</div>`:'<div class="muted" style="margin-top:14px">Todavía no hay partidos individuales cargados.</div>'}<div style="margin-top:12px"><button class="btn small dark" onclick="showMatch('${m.id}')">VER DETALLE</button></div></div>`;
+  return `<div class="card" style="margin-top:12px"><div style="display:flex;justify-content:space-between;gap:15px;align-items:flex-start"><div><div class="muted">${d.period||''}</div><h3 style="margin:5px 0 8px">${teamName(m.a)} <span class="muted">vs</span> ${teamName(m.b)}</h3><div style="font-size:22px;font-weight:900">${partial}</div>${final}</div><div class="status">${m.status==='Finalizado'?'Finalizado':ps.total?'En juego':'Programado'}</div></div>${rubbers?`<div style="margin-top:14px">${rubbers}</div>`:'<div class="muted" style="margin-top:14px">Todavía no hay partidos individuales cargados.</div>'}<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn small dark" onclick="showMatch('${m.id}')">VER DETALLE</button>${adminAuth?`<button class="btn small dark" onclick="editMatch('${m.id}')">EDITAR ENFRENTAMIENTO</button>`:''}</div></div>`;
 }
 
 function renderFixture(){
@@ -257,7 +258,7 @@ function renderFixture(){
     document.getElementById('fixtureMatchA').innerHTML=teamOptions()||'<option value="">Creá equipos primero</option>';
     document.getElementById('fixtureMatchB').innerHTML=teamOptions()||'<option value="">Creá equipos primero</option>';
   }
-  document.getElementById('fixtureList').innerHTML=state.dates.map(d=>`<div class="card" style="margin-bottom:16px"><div style="display:flex;justify-content:space-between;gap:15px;align-items:flex-start"><div><h3 style="margin:0 0 5px">${d.title}</h3><div class="muted">${d.period||'Período a definir'}</div></div><div class="status">${(d.matches||[]).length} enfrentamientos</div></div><div style="margin-top:14px">${(d.matches||[]).map(m=>fixtureMatchCard(d,m)).join('')||'<div class="muted" style="padding-top:12px">No hay enfrentamientos cargados todavía.</div>'}</div></div>`).join('')||'<div class="empty"><strong>Fixture vacío</strong>La organización todavía no creó fechas.</div>';
+  document.getElementById('fixtureList').innerHTML=state.dates.map(d=>`<div class="card" style="margin-bottom:16px"><div style="display:flex;justify-content:space-between;gap:15px;align-items:flex-start"><div><h3 style="margin:0 0 5px">${d.title}</h3><div class="muted">${d.period||'Período a definir'}</div></div><div style="text-align:right"><div class="status">${(d.matches||[]).length} enfrentamientos</div>${adminAuth?`<button class="btn small dark" style="margin-top:8px" onclick="editDate('${d.id}')">EDITAR FECHA</button>`:''}</div></div><div style="margin-top:14px">${(d.matches||[]).map(m=>fixtureMatchCard(d,m)).join('')||'<div class="muted" style="padding-top:12px">No hay enfrentamientos cargados todavía.</div>'}</div></div>`).join('')||'<div class="empty"><strong>Fixture vacío</strong>La organización todavía no creó fechas.</div>';
 }
 function addDateFromFixture(){
   if(!adminAuth){requestAdmin();return}
@@ -303,7 +304,28 @@ function deleteTeam(){let k=document.getElementById('teamKey').value;if(!k||k===
 function editPlayer(i){let p=state.players[i],n=prompt('Nombre del jugador:',p.name);if(n===null)return;let level=prompt('Nivel (Capitán, 2, 3, 4 o 5):',p.level);if(level===null)return;let team=prompt('Código de equipo: '+Object.keys(state.teams).map(k=>k+'='+teamName(k)).join(' | '),p.team);if(team===null)return;if(!state.teams[team]){toast('Código de equipo inexistente');return}p.name=n.trim()||p.name;p.level=level;p.team=team;persist('Jugador modificado')}
 function deletePlayer(i){if(!confirm('¿Borrar este jugador?'))return;state.players.splice(i,1);persist('Jugador borrado')}
 function addPlayer(){let n=document.getElementById('playerName').value.trim(),t=document.getElementById('playerTeam').value;if(!n||!t){toast('Completá nombre y equipo');return}state.players.push({id:'p'+Date.now(),name:n,team:t,level:document.getElementById('playerLevel').value});document.getElementById('playerName').value='';persist('Jugador agregado')}
-function deletePlayer(i){if(!confirm('¿Borrar este jugador?'))return;state.players.splice(i,1);persist('Jugador borrado')}
+
+function editDate(id){
+  if(!adminAuth){requestAdmin();return}
+  let d=state.dates.find(x=>String(x.id)===String(id));if(!d)return;
+  let title=prompt('Nombre de la fecha:',d.title);if(title===null)return;
+  let period=prompt('Período de la fecha:',d.period||'');if(period===null)return;
+  title=title.trim();period=period.trim();if(!title){toast('El nombre de la fecha no puede quedar vacío');return}
+  d.title=title;d.period=period;persist('Fecha modificada');
+}
+function editMatch(id){
+  if(!adminAuth){requestAdmin();return}
+  let x=findMatch(id);if(!x)return;let m=x[1];
+  let a=prompt('Código del equipo 1: '+Object.keys(state.teams).map(k=>k+'='+teamName(k)).join(' | '),m.a);if(a===null)return;
+  let b=prompt('Código del equipo 2: '+Object.keys(state.teams).map(k=>k+'='+teamName(k)).join(' | '),m.b);if(b===null)return;
+  a=a.trim();b=b.trim();if(!state.teams[a]||!state.teams[b]||a===b){toast('Los dos equipos deben existir y ser distintos');return}
+  m.a=a;m.b=b;persist('Enfrentamiento modificado');
+}
+function clearAllData(){
+  if(!adminAuth){requestAdmin();return}
+  if(!confirm('¿Borrar TODO? Se eliminarán equipos, jugadores, fechas, enfrentamientos y resultados. Esta acción no se puede deshacer.'))return;
+  state={teams:{},players:[],dates:[]};activeDate=1;persist('Todos los datos fueron eliminados');
+}
 function addDate(){go('fixture');if(adminAuth)setTimeout(()=>addDateFromFixture(),0);else requestAdmin()}
 function addMatch(){go('fixture');if(adminAuth)setTimeout(()=>addMatchFromFixture(),0);else requestAdmin()}
 function findMatch(id){for(const d of state.dates){let m=(d.matches||[]).find(x=>x.id===id);if(m)return[d,m]}}
