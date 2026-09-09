@@ -1,12 +1,12 @@
 import { json, nowIso, randomBytes, b64url, fromB64url, sha256, pbkdf2, parseCookies, sessionCookie, clearSessionCookie, cleanSessions } from '../_utils.js';
 
 async function ensureTables(env){
-  await env.DB.prepare('CREATE TABLE IF NOT EXISTS admin_config (id INTEGER PRIMARY KEY CHECK (id=1), pin_hash TEXT NOT NULL, salt TEXT NOT NULL, iterations INTEGER NOT NULL DEFAULT 120000, updated_at TEXT NOT NULL)').run();
+  await env.DB.prepare('CREATE TABLE IF NOT EXISTS admin_config (id INTEGER PRIMARY KEY CHECK (id=1), pin_hash TEXT NOT NULL, salt TEXT NOT NULL, iterations INTEGER NOT NULL DEFAULT 100000, updated_at TEXT NOT NULL)').run();
   await env.DB.prepare('CREATE TABLE IF NOT EXISTS admin_sessions (token_hash TEXT PRIMARY KEY, expires_at INTEGER NOT NULL)').run();
 }
 
 async function savePinConfig(env,pin){
-  const salt=randomBytes(16), iterations=120000, hash=await pbkdf2(pin,salt,iterations);
+  const salt=randomBytes(16), iterations=100000, hash=await pbkdf2(pin,salt,iterations);
   await env.DB.prepare('INSERT INTO admin_config(id,pin_hash,salt,iterations,updated_at) VALUES(1,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET pin_hash=excluded.pin_hash,salt=excluded.salt,iterations=excluded.iterations,updated_at=excluded.updated_at')
     .bind(b64url(hash),b64url(salt),iterations,nowIso()).run();
 }
@@ -37,7 +37,11 @@ export async function onRequestPost({request,env}){
     }
 
     if(!valid && cfg){
-      const hash=await pbkdf2(pin,fromB64url(cfg.salt),Number(cfg.iterations)||120000);
+      const iterations=Number(cfg.iterations)||100000;
+      if(iterations>100000){
+        return json({error:'La configuración anterior del PIN usa demasiadas iteraciones. Configurá ADMIN_PIN en Cloudflare para migrar el acceso a 100000 iteraciones.'},500);
+      }
+      const hash=await pbkdf2(pin,fromB64url(cfg.salt),iterations);
       valid=b64url(hash)===cfg.pin_hash;
     }
 
